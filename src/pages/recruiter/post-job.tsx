@@ -21,7 +21,7 @@ export default function PostJobPage() {
     description: "",
     location: "",
     salary: "",
-    created_at: new Date().toISOString().slice(0, 16),
+    created_at: new Date().toISOString().slice(0, 10),
     is_active: true,
     applicants: "",
   });
@@ -98,7 +98,7 @@ export default function PostJobPage() {
                   rows={4}
                   required
                 />
-              </Grid>
+              </Grid>                                                                                       
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
@@ -114,7 +114,7 @@ export default function PostJobPage() {
                   fullWidth
                   label="Created At"
                   name="created_at"
-                  type="datetime-local"
+                  type="date"
                   value={jobDetails.created_at}
                   onChange={handleChange}
                   required

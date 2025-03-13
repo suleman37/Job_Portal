@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Container, Typography, Button, Card, CardContent, Grid, Alert } from "@mui/material";
+import { Container, Typography, Button, Card, CardContent, Grid, Alert, Box } from "@mui/material";
 import { useRouter } from "next/router";
 import API from "../../services/api"; 
+
 interface Job {
   id: number;
   title: string;
@@ -9,6 +10,8 @@ interface Job {
   location: string;
   salary: string;
   created_at: string;
+  is_active: boolean;
+  applicants: string[];
 }
 
 interface Interview {
@@ -29,16 +32,20 @@ export default function RecruiterDashboard() {
       title: "Software Engineer",
       description: "Develop and maintain web applications.",
       location: "New York, NY",
-      salary: "$100,000",
-      created_at: "2023-01-01T00:00:00Z"
+      salary: "100000.00",
+      created_at: "2023-01-01T00:00:00Z",
+      is_active: true,
+      applicants: ["user1", "user2"]
     },
     {
       id: 2,
       title: "Product Manager",
       description: "Lead product development teams.",
       location: "San Francisco, CA",
-      salary: "$120,000",
-      created_at: "2023-02-15T00:00:00Z"
+      salary: "120000.00",
+      created_at: "2023-02-15T00:00:00Z",
+      is_active: true,
+      applicants: ["user3"]
     }
   ]);
   const [interviews, setInterviews] = useState<Interview[]>([
@@ -61,14 +68,19 @@ export default function RecruiterDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    // fetchDashboardData(); // Commented out to use demo data
+    fetchDashboardData();
   }, []);
 
   const fetchDashboardData = async () => {
     try {
       const profileRes = await API.get("recruiter/profile/");
+      console.log("Fetching recruiter profile data..." , profileRes);
+
       const jobsRes = await API.get("recruiter/jobs/");
+      console.log("Fetching jobs data..." , profileRes);
+
       const interviewsRes = await API.get("recruiter/interviews/");
+      console.log("Fetching interviews data..." , interviewsRes);
 
       setProfile(profileRes.data);
       setJobs(jobsRes.data);
@@ -86,43 +98,49 @@ export default function RecruiterDashboard() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Typography variant="h6" gutterBottom>
-        Your Posted Jobs
-      </Typography>
-      <Button variant="contained" color="primary" sx={{ mb: 2 }} onClick={() => router.push("/recruiter/post-job")}>
-        Post New Job
-      </Button>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Your Posted Jobs
+        </Typography>
+        <Button variant="contained" color="primary" sx={{ mb: 2 }} onClick={() => router.push("/recruiter/post-job")}>
+          Post New Job
+        </Button>
+      </Box>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         {jobs.map((job) => (
           <Grid item xs={12} md={6} key={job.id}>
-            <Card>
+            <Card sx={{ boxShadow: 3 }}>
               <CardContent>
-                <Typography variant="h6">{job.title}</Typography>
-                <Typography>{job.description}</Typography>
-                <Typography>Location: {job.location}</Typography>
-                <Typography>Salary: {job.salary}</Typography>
-                <Typography variant="caption">Posted on: {new Date(job.created_at).toLocaleDateString()}</Typography>
+                <Typography variant="h6" gutterBottom>{job.title}</Typography>
+                <Typography variant="body2" color="textSecondary" paragraph>{job.description}</Typography>
+                <Typography variant="body2">Location: {job.location}</Typography>
+                <Typography variant="body2">Salary: ${parseFloat(job.salary).toFixed(2)}</Typography>
+                <Typography variant="caption" display="block">Posted on: {new Date(job.created_at).toLocaleDateString()}</Typography>
+                <Typography variant="caption" display="block">Active: {job.is_active ? "Yes" : "No"}</Typography>
+                <Typography variant="caption" display="block">Applicants: {job.applicants.join(", ")}</Typography>
               </CardContent>
             </Card>
           </Grid>
         ))}
       </Grid>
 
-      <Typography variant="h6" sx={{ mt: 4 }}>
-        Scheduled Interviews
-      </Typography>
-      {interviews.length === 0 && <Typography>No interviews scheduled.</Typography>}
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Scheduled Interviews
+        </Typography>
+        {interviews.length === 0 && <Typography>No interviews scheduled.</Typography>}
+      </Box>
 
-      <Grid container spacing={2} sx={{ mt: 2 }}>
+      <Grid container spacing={3} sx={{ mt: 2 }}>
         {interviews.map((interview) => (
           <Grid item xs={12} key={interview.id}>
-            <Card>
+            <Card sx={{ boxShadow: 3 }}>
               <CardContent>
-                <Typography>Candidate: {interview.candidate}</Typography>
-                <Typography>Job: {interview.job}</Typography>
-                <Typography>Scheduled At: {new Date(interview.scheduled_at).toLocaleString()}</Typography>
-                <Typography>Status: {interview.status}</Typography>
+                <Typography variant="body2">Candidate: {interview.candidate}</Typography>
+                <Typography variant="body2">Job: {interview.job}</Typography>
+                <Typography variant="body2">Scheduled At: {new Date(interview.scheduled_at).toLocaleString()}</Typography>
+                <Typography variant="body2">Status: {interview.status}</Typography>
               </CardContent>
             </Card>
           </Grid>

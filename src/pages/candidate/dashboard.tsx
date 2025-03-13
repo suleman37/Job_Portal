@@ -4,8 +4,34 @@ import { useRouter } from "next/router";
 import axios from "axios";
 
 const CandidateDashboard = () => {
-  const [profile, setProfile] = useState<any>(null);
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>({
+    username: "DemoCandidate",
+    email: "demo@candidate.com",
+    applied_jobs: [1, 2]
+  });
+  const [jobs, setJobs] = useState<any[]>([
+    {
+      id: 1,
+      title: "Frontend Developer",
+      company_name: "Tech Corp",
+      location: "Remote",
+      salary: "$80,000"
+    },
+    {
+      id: 2,
+      title: "Backend Developer",
+      company_name: "Innovate Ltd",
+      location: "New York, NY",
+      salary: "$90,000"
+    },
+    {
+      id: 3,
+      title: "Full Stack Developer",
+      company_name: "Web Solutions",
+      location: "San Francisco, CA",
+      salary: "$100,000"
+    }
+  ]);
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
