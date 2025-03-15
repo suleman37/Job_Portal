@@ -12,6 +12,7 @@ interface Job {
   created_at: string;
   is_active: boolean;
   applicants: string[];
+  email: string; // Added email field to Job interface
 }
 
 interface Interview {
@@ -24,7 +25,8 @@ interface Interview {
 
 export default function RecruiterDashboard() {
   const [profile, setProfile] = useState<any>({
-    username: "DemoRecruiter"
+    username: "DemoRecruiter",
+    email: "demo@recruiter.com" // Assuming this is the recruiter's email
   });
   const [jobs, setJobs] = useState<Job[]>([]);
   const [interviews, setInterviews] = useState<Interview[]>([]);
@@ -32,6 +34,8 @@ export default function RecruiterDashboard() {
   const router = useRouter();
 
   useEffect(() => {
+    const formData = JSON.parse(localStorage.getItem("formData") || '{"email":"","password":""}');
+    setProfile({ username: formData.email.split('@')[0], email: formData.email });
     fetchDashboardData();
   }, []);
 
@@ -44,8 +48,13 @@ export default function RecruiterDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("formData");
+    router.push("/recruiter/login");
+  };
+
   return (
-    <Container style={{border:"4px solid black"}}>
+    <Container>
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
@@ -54,12 +63,16 @@ export default function RecruiterDashboard() {
           <Button color="inherit" onClick={() => router.push("/recruiter/post-job")}>
             Post New Job
           </Button>
+          <Button color="inherit" onClick={handleLogout}>
+            Logout
+          </Button>
         </Toolbar>
       </AppBar>
 
       <Typography variant="h4" gutterBottom sx={{ mt: 2 }}>
         Welcome, {profile?.username}!
       </Typography>
+     
 
       {error && <Alert severity="error">{error}</Alert>}
 
@@ -71,19 +84,20 @@ export default function RecruiterDashboard() {
 
       <Grid container spacing={3} >
         {jobs.map((job) => (
-          <Grid item xs={12} md={6} key={job.id}>
-            <Card sx={{ boxShadow: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>{job.title}</Typography>
-                <Typography variant="body2" color="textSecondary" paragraph>{job.description}</Typography>
-                <Typography variant="body2">Location: {job.location}</Typography>
-                <Typography variant="body2">Salary: ${parseFloat(job.salary).toFixed(2)}</Typography>
-                <Typography variant="caption" display="block">Posted on: {new Date(job.created_at).toLocaleDateString()}</Typography>
-                <Typography variant="caption" display="block">Active: {job.is_active ? "Yes" : "No"}</Typography>
-                <Typography variant="caption" display="block">Applicants: {job.applicants.join(", ")}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+          job.email === profile.email && ( 
+            <Grid item xs={12} md={6} key={job.id}>
+              <Card sx={{ boxShadow: 3 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>{job.title}</Typography>
+                  <Typography variant="body2" color="textSecondary" paragraph>{job.description}</Typography>
+                  <Typography variant="body2">Location: {job.location}</Typography>
+                  <Typography variant="body2">Email: {job.email}</Typography>
+                  <Typography variant="body2">Salary: ${parseFloat(job.salary).toFixed(2)}</Typography>
+                  <Typography variant="caption" display="block">Posted on: {new Date(job.created_at).toLocaleDateString()}</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          )
         ))}
       </Grid>
 
