@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -26,7 +26,17 @@ export default function PostJobPage() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [email, setEmail] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    // Load email from localStorage if available
+    const savedFormData = localStorage.getItem("formData");
+    if (savedFormData) {
+      const parsedData = JSON.parse(savedFormData);
+      setEmail(parsedData.email);
+    }
+  }, []);
 
   // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -56,6 +66,7 @@ export default function PostJobPage() {
         ...jobDetails,
         salary: parseFloat(jobDetails.salary), // Convert salary to number
         applicants: applicantsArray, // Convert applicants to an array
+        email, // Include email in the data
       };
 
       // Send data to API

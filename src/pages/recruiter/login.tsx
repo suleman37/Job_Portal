@@ -1,27 +1,43 @@
 import { Container, TextField, Button, Typography, Box, Alert, Link } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 export default function RecruiterLogin() {
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, setValue } = useForm();
   const router = useRouter();
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
 
+  useEffect(() => {
+    // Load form data from localStorage if available
+    const savedFormData = localStorage.getItem("formData");
+    if (savedFormData) {
+      const parsedData = JSON.parse(savedFormData);
+      setValue("email", parsedData.email);
+      setValue("password", parsedData.password);
+    }
+  }, [setValue]);
+
   // Handle form submission
   const onSubmit = async (data: any) => {
+    console.log("Form Data:", data); // Console the data
     try {
       setError("");
       setSuccess("");
+
+      // Save form data in localStorage
+      localStorage.setItem("formData", JSON.stringify(data));
 
       // Login API request
       const response = await axios.post("http://127.0.0.1:8000/api/recruiter/login/", data);
 
       if (response.status === 200) {
         const token = response.data.access;
+        const userData = response.data.user; // Assuming the API returns user data
         localStorage.setItem("token", token); // Save JWT token for authentication
+        localStorage.setItem("user", JSON.stringify(userData)); // Save user data in localStorage
 
         setSuccess("Login successful! Redirecting to dashboard...");
 

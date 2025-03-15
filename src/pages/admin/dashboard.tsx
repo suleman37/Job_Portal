@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Typography, Grid, Card, CardContent, CircularProgress, Alert, Box } from '@mui/material';
 import AdminDashboardLayout from '../../components/AdminDashboardLayout';
 import UserTable from '../../components/UserTable';
+
+import { useEffect, useState } from "react";
+import { Typography, Box, Card, CardContent, Grid, Alert } from "@mui/material";
+import { useRouter } from "next/router";
+import axios from "axios";
+import CircularProgress from '@mui/material/CircularProgress';
 
 interface User {
   id: number;
@@ -19,26 +23,58 @@ interface AdminStats {
 }
 
 const AdminDashboard = () => {
-  const [users, setUsers] = useState<User[]>([
-    { id: 1, username: 'admin1', email: 'admin1@example.com', user_type: 'admin' },
-    { id: 2, username: 'recruiter1', email: 'recruiter1@example.com', user_type: 'recruiter' },
-    { id: 3, username: 'candidate1', email: 'candidate1@example.com', user_type: 'candidate' }
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<AdminStats>({
-    total_users: 3,
-    total_recruiters: 1,
-    total_candidates: 1,
-    total_jobs: 5,
-    total_interviews: 2,
+    total_users: 0,
+    total_recruiters: 0,
+    total_candidates: 0,
+    total_jobs: 0,
+    total_interviews: 0,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const router = useRouter();
 
-  // ✅ Delete user handler
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/candidate/login");
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        const profileRes = await axios.get("http://127.0.0.1:8000/api/candidate/profile/", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log("Profile Data:", profileRes.data);
+
+        const usersRes = await axios.get("http://127.0.0.1:8000/api/users/", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log("Users Data:", usersRes.data);
+        setUsers(usersRes.data);
+
+        const statsRes = await axios.get("http://127.0.0.1:8000/api/admin/stats/", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log("Stats Data:", statsRes.data);
+        setStats(statsRes.data);
+
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load data. Please make sure you are logged in.");
+      }
+    };
+
+    fetchData();
+  }, [router]);
+
   const handleDelete = async (userId: number) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        setUsers(users.filter((user) => user.id !== userId));  // Update UI
+        setUsers(users.filter((user) => user.id !== userId));
       } catch (err) {
         console.error(err);
         alert('Failed to delete user.');
@@ -46,15 +82,14 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ Loading screen
   if (loading) return <Box display="flex" justifyContent="center" alignItems="center" height="100vh"><CircularProgress /></Box>;
+
   return (
     <AdminDashboardLayout>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
         <Typography variant="h4" gutterBottom>Welcome, Admin!</Typography>
         {error && <Alert severity="error">{error}</Alert>}
       </Box>
-      {/* Stats Section */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={4}>
           <Card variant="outlined">
@@ -81,8 +116,6 @@ const AdminDashboard = () => {
           </Card>
         </Grid>
       </Grid>
-
-      {/* User Table */}
       <UserTable users={users} handleDelete={handleDelete} />
     </AdminDashboardLayout>
   );

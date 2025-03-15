@@ -34,17 +34,17 @@ const CandidateDashboard = () => {
         console.log("Profile Data:", profileRes.data);
         setProfile(profileRes.data);
 
-        // Fetch available jobs from API
         const jobsRes = await axios.get("http://127.0.0.1:8000/api/jobs/");
         console.log("Jobs Data:", jobsRes.data);
         setJobs(jobsRes.data);
 
-        // Fetch application data for the selected job
         const applicationRes = await axios.get(`http://127.0.0.1:8000/apply/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log(`Application Data for Job ID ${selectedJobId}:`, applicationRes.data);
-        setAppliedJobs(applicationRes.data); // Store application data
+
+        const userApplications = applicationRes.data.filter(application => application.user === profileRes.data.id);
+        setAppliedJobs(userApplications);
       } catch (err) {
         console.error(err);
         setError("Failed to load data. Please make sure you are logged in.");
@@ -70,8 +70,8 @@ const CandidateDashboard = () => {
     if (selectedJobId === null || !resume) return;
     const token = localStorage.getItem("token");
     const formData = new FormData();
-    formData.append("cover_letter", coverLetter); // Updated field name
-    formData.append("cv", resume); // Updated field name
+    formData.append("cover_letter", coverLetter);
+    formData.append("cv", resume);
 
     try {
       await axios.post(`http://127.0.0.1:8000/apply/${selectedJobId}/`, formData, {
@@ -115,7 +115,7 @@ const CandidateDashboard = () => {
           <Typography variant="h6" fontWeight="bold">Your Profile</Typography>
           <Divider sx={{ my: 1 }} />
           <Typography>Email: {profile?.email}</Typography>
-          <Typography>Applied Jobs: {appliedJobs.length}</Typography> {/* Updated to show the number of applied jobs */}
+          <Typography>Applied Jobs: {appliedJobs.length}</Typography>
         </CardContent>
       </Card>
 
