@@ -13,7 +13,7 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import { useRouter } from "next/router";
-import API from "../../services/api";
+import axios from "axios";
 
 export default function PostJobPage() {
   const [jobDetails, setJobDetails] = useState({
@@ -21,32 +21,45 @@ export default function PostJobPage() {
     description: "",
     location: "",
     salary: "",
-    created_at: new Date().toISOString().slice(0, 10),
     is_active: true,
-    applicants: "",
+    applicants: "", // Comma-separated user IDs
   });
-  const [error, setError] = useState<string>("");
-  const [success, setSuccess] = useState<string>("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const router = useRouter();
 
+  // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     const checked = (e.target as HTMLInputElement).checked;
+
     setJobDetails({
       ...jobDetails,
       [name]: type === "checkbox" ? checked : value,
     });
   };
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
-    try {
-      const applicantsArray = jobDetails.applicants.split(",").map(id => id.trim());
-      const jobData = { ...jobDetails, applicants: applicantsArray };
 
-      await API.post("recruiter/jobs/", jobData);
+    try {
+      // Convert applicants to an array of numbers
+      const applicantsArray = jobDetails.applicants
+        ? jobDetails.applicants.split(",").map(id => parseInt(id.trim(), 10))
+        : [];
+
+      // Convert salary to a float
+      const finalData = {
+        ...jobDetails,
+        salary: parseFloat(jobDetails.salary), // Convert salary to number
+        applicants: applicantsArray, // Convert applicants to an array
+      };
+
+      // Send data to API
+      await axios.post("http://127.0.0.1:8000/api/jobs/", finalData);
       setSuccess("Job posted successfully!");
       setTimeout(() => router.push("/recruiter/dashboard"), 2000);
     } catch (err) {
@@ -104,18 +117,8 @@ export default function PostJobPage() {
                   fullWidth
                   label="Salary"
                   name="salary"
+                  type="number"
                   value={jobDetails.salary}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Created At"
-                  name="created_at"
-                  type="date"
-                  value={jobDetails.created_at}
                   onChange={handleChange}
                   required
                 />

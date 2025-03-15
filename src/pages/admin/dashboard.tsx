@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Typography, Grid, Card, CardContent, CircularProgress, Alert } from '@mui/material';
+import { Typography, Grid, Card, CardContent, CircularProgress, Alert, Box } from '@mui/material';
 import AdminDashboardLayout from '../../components/AdminDashboardLayout';
 import UserTable from '../../components/UserTable';
 
@@ -47,16 +47,39 @@ const AdminDashboard = () => {
   };
 
   // ✅ Loading screen
-  if (loading) return <CircularProgress />;
+  if (loading) return <Box display="flex" justifyContent="center" alignItems="center" height="100vh"><CircularProgress /></Box>;
   return (
     <AdminDashboardLayout>
-      <Typography variant="h4" gutterBottom>Welcome, Admin!</Typography>
-      {error && <Alert severity="error">{error}</Alert>}
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h4" gutterBottom>Welcome, Admin!</Typography>
+        {error && <Alert severity="error">{error}</Alert>}
+      </Box>
       {/* Stats Section */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={4}><Card><CardContent><Typography>Total Users: {stats.total_users}</Typography></CardContent></Card></Grid>
-        <Grid item xs={12} sm={4}><Card><CardContent><Typography>Total Recruiters: {stats.total_recruiters}</Typography></CardContent></Card></Grid>
-        <Grid item xs={12} sm={4}><Card><CardContent><Typography>Total Candidates: {stats.total_candidates}</Typography></CardContent></Card></Grid>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={4}>
+          <Card variant="outlined">
+            <CardContent>
+              <Typography variant="h6" align="center">Total Users</Typography>
+              <Typography variant="h5" align="center">{stats.total_users}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card variant="outlined">
+            <CardContent>
+              <Typography variant="h6" align="center">Total Recruiters</Typography>
+              <Typography variant="h5" align="center">{stats.total_recruiters}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card variant="outlined">
+            <CardContent>
+              <Typography variant="h6" align="center">Total Candidates</Typography>
+              <Typography variant="h5" align="center">{stats.total_candidates}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* User Table */}

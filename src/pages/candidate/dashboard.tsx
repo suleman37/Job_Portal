@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Container, Typography, Box, Button, Card, CardContent, Grid, Alert } from "@mui/material";
+import { Container, Typography, Box, Button, Card, CardContent, Grid, Alert, Divider, AppBar, Toolbar, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from "@mui/material";
 import { useRouter } from "next/router";
 import axios from "axios";
 
@@ -9,33 +9,14 @@ const CandidateDashboard = () => {
     email: "demo@candidate.com",
     applied_jobs: [1, 2]
   });
-  const [jobs, setJobs] = useState<any[]>([
-    {
-      id: 1,
-      title: "Frontend Developer",
-      company_name: "Tech Corp",
-      location: "Remote",
-      salary: "$80,000"
-    },
-    {
-      id: 2,
-      title: "Backend Developer",
-      company_name: "Innovate Ltd",
-      location: "New York, NY",
-      salary: "$90,000"
-    },
-    {
-      id: 3,
-      title: "Full Stack Developer",
-      company_name: "Web Solutions",
-      location: "San Francisco, CA",
-      salary: "$100,000"
-    }
-  ]);
+  const [jobs, setJobs] = useState<any[]>([]);
   const [error, setError] = useState<string>("");
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const [coverLetter, setCoverLetter] = useState<string>("");
+  const [resume, setResume] = useState<File | null>(null);
   const router = useRouter();
 
-  // Fetch profile and jobs on component load
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -51,9 +32,8 @@ const CandidateDashboard = () => {
         });
         setProfile(profileRes.data);
 
-        const jobsRes = await axios.get("http://127.0.0.1:8000/api/jobs/", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Fetch available jobs from API
+        const jobsRes = await axios.get("http://127.0.0.1:8000/api/jobs/");
         setJobs(jobsRes.data);
       } catch (err) {
         console.error(err);
@@ -64,13 +44,34 @@ const CandidateDashboard = () => {
     fetchData();
   }, [router]);
 
-  const handleApplyJob = async (jobId: number) => {
+  const handleOpenDialog = (jobId: number) => {
+    setSelectedJobId(jobId);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedJobId(null);
+    setCoverLetter("");
+    setResume(null);
+  };
+
+  const handleApplyJob = async () => {
+    if (selectedJobId === null || !resume) return;
     const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("cover_letter", coverLetter); // Updated field name
+    formData.append("cv", resume); // Updated field name
+
     try {
-      await axios.post(`http://127.0.0.1:8000/api/jobs/apply/${jobId}/`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
+      await axios.post(`http://127.0.0.1:8000/apply/${selectedJobId}/`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        },
       });
       alert("Successfully applied to the job!");
+      handleCloseDialog();
     } catch (err) {
       console.error(err);
       alert("Failed to apply to the job.");
@@ -83,40 +84,49 @@ const CandidateDashboard = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4">Welcome, {profile?.username || "Candidate"}!</Typography>
-        <Button color="error" variant="contained" onClick={handleLogout}>Logout</Button>
+    <Container maxWidth="lg">
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Candidate Dashboard
+          </Typography>
+          <Button color="inherit" onClick={handleLogout}>Logout</Button>
+        </Toolbar>
+      </AppBar>
+
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} mt={2}>
+        <Typography variant="h4" fontWeight="bold">Welcome, {profile?.username || "Candidate"}!</Typography>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-      {/* Profile Overview */}
-      <Card sx={{ mb: 4 }}>
+      <Card sx={{ mb: 4, boxShadow: 3 }}>
         <CardContent>
-          <Typography variant="h6">Your Profile</Typography>
+          <Typography variant="h6" fontWeight="bold">Your Profile</Typography>
+          <Divider sx={{ my: 1 }} />
           <Typography>Email: {profile?.email}</Typography>
           <Typography>Applied Jobs: {profile?.applied_jobs?.length || 0}</Typography>
         </CardContent>
       </Card>
 
-      {/* Jobs Section */}
-      <Typography variant="h5" sx={{ mb: 2 }}>Available Jobs</Typography>
+      <Typography variant="h5" sx={{ mb: 2 }} fontWeight="bold">Available Jobs</Typography>
       <Grid container spacing={3}>
         {jobs.map((job) => (
           <Grid item xs={12} sm={6} md={4} key={job.id}>
-            <Card>
+            <Card sx={{ boxShadow: 3 }}>
               <CardContent>
-                <Typography variant="h6">{job.title}</Typography>
-                <Typography>Company: {job.company_name}</Typography>
+                <Typography variant="h6" fontWeight="bold">{job.title}</Typography>
+                <Typography>Description: {job.description}</Typography>
                 <Typography>Location: {job.location}</Typography>
                 <Typography>Salary: {job.salary}</Typography>
+                <Typography>Created At: {new Date(job.created_at).toLocaleDateString()}</Typography>
+                <Typography>Active: {job.is_active ? "Yes" : "No"}</Typography>
                 <Button
                   variant="contained"
                   color="primary"
                   fullWidth
                   sx={{ mt: 2 }}
-                  onClick={() => handleApplyJob(job.id)}
+                  onClick={() => handleOpenDialog(job.id)}
                 >
                   Apply Now
                 </Button>
@@ -126,20 +136,46 @@ const CandidateDashboard = () => {
         ))}
       </Grid>
 
-      {/* AI Practice Interview Section */}
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Apply for Job</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Please provide a cover letter and attach your resume for your application.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="coverLetter"
+            label="Cover Letter"
+            type="text"
+            fullWidth
+            multiline
+            rows={4}
+            value={coverLetter}
+            onChange={(e) => setCoverLetter(e.target.value)}
+          />
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx"
+            onChange={(e) => setResume(e.target.files ? e.target.files[0] : null)}
+            style={{ marginTop: '16px' }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleApplyJob} color="primary" disabled={!resume}>
+            Apply
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Box mt={5}>
-        <Typography variant="h5" sx={{ mb: 2 }}>AI Practice Interviews</Typography>
+        <Typography variant="h5" sx={{ mb: 2 }} fontWeight="bold">AI Practice Interviews</Typography>
         <Typography>Prepare for your interviews using our AI-driven practice module.</Typography>
         <Button variant="contained" color="secondary" sx={{ mt: 2 }} onClick={() => router.push("/candidate/ai-interview")}>
           Start AI Interview
-        </Button>
-      </Box>
-
-      {/* Chatbot Support */}
-      <Box mt={5}>
-        <Typography variant="h5" sx={{ mb: 2 }}>Need Help? Talk to AI Chatbot</Typography>
-        <Button variant="outlined" color="info" onClick={() => router.push("/candidate/chatbot")}>
-          Open Chatbot
         </Button>
       </Box>
     </Container>

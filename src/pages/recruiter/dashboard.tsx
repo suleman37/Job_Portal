@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Container, Typography, Button, Card, CardContent, Grid, Alert, Box } from "@mui/material";
+import { Container, Typography, Button, Card, CardContent, Grid, Alert, Box, AppBar, Toolbar } from "@mui/material";
 import { useRouter } from "next/router";
-import API from "../../services/api"; 
+import axios from "axios";
 
 interface Job {
   id: number;
@@ -26,44 +26,8 @@ export default function RecruiterDashboard() {
   const [profile, setProfile] = useState<any>({
     username: "DemoRecruiter"
   });
-  const [jobs, setJobs] = useState<Job[]>([
-    {
-      id: 1,
-      title: "Software Engineer",
-      description: "Develop and maintain web applications.",
-      location: "New York, NY",
-      salary: "100000.00",
-      created_at: "2023-01-01T00:00:00Z",
-      is_active: true,
-      applicants: ["user1", "user2"]
-    },
-    {
-      id: 2,
-      title: "Product Manager",
-      description: "Lead product development teams.",
-      location: "San Francisco, CA",
-      salary: "120000.00",
-      created_at: "2023-02-15T00:00:00Z",
-      is_active: true,
-      applicants: ["user3"]
-    }
-  ]);
-  const [interviews, setInterviews] = useState<Interview[]>([
-    {
-      id: 1,
-      candidate: "John Doe",
-      job: "Software Engineer",
-      scheduled_at: "2023-03-01T10:00:00Z",
-      status: "Scheduled"
-    },
-    {
-      id: 2,
-      candidate: "Jane Smith",
-      job: "Product Manager",
-      scheduled_at: "2023-03-02T14:00:00Z",
-      status: "Completed"
-    }
-  ]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [interviews, setInterviews] = useState<Interview[]>([]);
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
@@ -73,26 +37,27 @@ export default function RecruiterDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const profileRes = await API.get("recruiter/profile/");
-      console.log("Fetching recruiter profile data..." , profileRes);
-
-      const jobsRes = await API.get("recruiter/jobs/");
-      console.log("Fetching jobs data..." , profileRes);
-
-      const interviewsRes = await API.get("recruiter/interviews/");
-      console.log("Fetching interviews data..." , interviewsRes);
-
-      setProfile(profileRes.data);
-      setJobs(jobsRes.data);
-      setInterviews(interviewsRes.data);
+      const response = await axios.get("http://127.0.0.1:8000/api/jobs/");
+      setJobs(response.data);
     } catch (err) {
-      setError("Failed to load recruiter data. Please login again.");
+      setError("Failed to load recruiter data from API.");
     }
   };
 
   return (
-    <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
+    <Container style={{border:"4px solid black"}}>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Recruiter Dashboard
+          </Typography>
+          <Button color="inherit" onClick={() => router.push("/recruiter/post-job")}>
+            Post New Job
+          </Button>
+        </Toolbar>
+      </AppBar>
+
+      <Typography variant="h4" gutterBottom sx={{ mt: 2 }}>
         Welcome, {profile?.username}!
       </Typography>
 
@@ -102,12 +67,9 @@ export default function RecruiterDashboard() {
         <Typography variant="h6" gutterBottom>
           Your Posted Jobs
         </Typography>
-        <Button variant="contained" color="primary" sx={{ mb: 2 }} onClick={() => router.push("/recruiter/post-job")}>
-          Post New Job
-        </Button>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={3} >
         {jobs.map((job) => (
           <Grid item xs={12} md={6} key={job.id}>
             <Card sx={{ boxShadow: 3 }}>
