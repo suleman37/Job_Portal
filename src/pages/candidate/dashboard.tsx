@@ -13,7 +13,7 @@ const CandidateDashboard = () => {
   const [appliedJobs, setAppliedJobs] = useState<any[]>([]);
   const [error, setError] = useState<string>("");
   const [openDialog, setOpenDialog] = useState<boolean>(false);
-  const [selectedJobId, setSelectedJobId] = useState<number | null>(1);
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
   const [coverLetter, setCoverLetter] = useState<string>("");
   const [resume, setResume] = useState<File | null>(null);
   const router = useRouter();
@@ -40,7 +40,7 @@ const CandidateDashboard = () => {
         setJobs(jobsRes.data);
 
         // Fetch application data for the selected job
-        const applicationRes = await axios.get(`http://127.0.0.1:8000/apply/${selectedJobId}/`, {
+        const applicationRes = await axios.get(`http://127.0.0.1:8000/apply/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log(`Application Data for Job ID ${selectedJobId}:`, applicationRes.data);
