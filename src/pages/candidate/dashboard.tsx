@@ -43,7 +43,14 @@ const CandidateDashboard = () => {
         });
         console.log(`Application Data for Job ID ${selectedJobId}:`, applicationRes.data);
 
-        const userApplications = applicationRes.data.filter(application => application.user === profileRes.data.id);
+        const userApplications = applicationRes.data
+          .filter(application => application.user === profileRes.data.id)
+          .reduce((uniqueJobs, application) => {
+            if (!uniqueJobs.some(job => job.job === application.job)) {
+              uniqueJobs.push(application);
+            }
+            return uniqueJobs;
+          }, []);
         setAppliedJobs(userApplications);
       } catch (err) {
         console.error(err);
@@ -72,16 +79,22 @@ const CandidateDashboard = () => {
     const formData = new FormData();
     formData.append("cover_letter", coverLetter);
     formData.append("cv", resume);
+    formData.append("job_id", selectedJobId.toString());
 
     try {
-      await axios.post(`http://127.0.0.1:8000/apply/${selectedJobId}/`, formData, {
+      const response = await axios.post("http://127.0.0.1:8000/apply/", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
         },
       });
-      alert("Successfully applied to the job!");
-      handleCloseDialog();
+
+      if (response.status === 201) {
+        alert("Successfully applied to the job!");
+        handleCloseDialog();
+      } else {
+        alert("Failed to apply to the job.");
+      }
     } catch (err) {
       console.error(err);
       alert("Failed to apply to the job.");
@@ -125,25 +138,26 @@ const CandidateDashboard = () => {
           const isApplied = appliedJobs.some(application => application.user === profile.id && application.job === job.id);
           return (
             <Grid item xs={12} sm={6} md={4} key={job.id}>
-              <Card sx={{ boxShadow: 3 }}>
-                <CardContent>
+              <Card sx={{ boxShadow: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flexGrow: 1 }}>
                   <Typography variant="h6" fontWeight="bold">{job.title}</Typography>
                   <Typography>Description: {job.description}</Typography>
                   <Typography>Location: {job.location}</Typography>
                   <Typography>Salary: {job.salary}</Typography>
                   <Typography>Created At: {new Date(job.created_at).toLocaleDateString()}</Typography>
                   <Typography>Active: {job.is_active ? "Yes" : "No"}</Typography>
+                </CardContent>
+                <Box sx={{ p: 2 }}>
                   <Button
                     variant="contained"
                     color="primary"
                     fullWidth
-                    sx={{ mt: 2 }}
                     onClick={() => handleOpenDialog(job.id)}
                     disabled={isApplied}
                   >
                     {isApplied ? "Applied" : "Apply Now"}
                   </Button>
-                </CardContent>
+                </Box>
               </Card>
             </Grid>
           );
@@ -187,7 +201,7 @@ const CandidateDashboard = () => {
       <Box mt={5}>
         <Typography variant="h5" sx={{ mb: 2 }} fontWeight="bold">AI Practice Interviews</Typography>
         <Typography>Prepare for your interviews using our AI-driven practice module.</Typography>
-        <Button variant="contained" color="secondary" sx={{ mt: 2 }} onClick={() => router.push("/candidate/ai-interview")}>
+        <Button variant="contained" color="secondary" sx={{ mt: 2 }} onClick={() => router.push("/chatbot")}>
           Start AI Interview
         </Button>
       </Box>

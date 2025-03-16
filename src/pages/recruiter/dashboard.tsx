@@ -12,7 +12,7 @@ interface Job {
   created_at: string;
   is_active: boolean;
   applicants: string[];
-  email: string; // Added email field to Job interface
+  email: string;
 }
 
 interface Interview {
@@ -101,13 +101,13 @@ export default function RecruiterDashboard() {
         ))}
       </Grid>
 
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Scheduled Interviews
-        </Typography>
-        {interviews.length === 0 && <Typography>No interviews scheduled.</Typography>}
+      <Box mt={5}>
+        <Typography variant="h5" sx={{ mb: 2 }} fontWeight="bold">AI Practice Interviews</Typography>
+        <Typography>Prepare for your interviews using our AI-driven practice module.</Typography>
+        <Button variant="contained" color="secondary" sx={{ mt: 2 }} onClick={() => router.push("/chatbot")}>
+          Start AI Interview
+        </Button>
       </Box>
-
       <Grid container spacing={3} sx={{ mt: 2 }}>
         {interviews.map((interview) => (
           <Grid item xs={12} key={interview.id}>
